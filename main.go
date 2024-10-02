@@ -33,6 +33,8 @@ func main() {
 	faqTemplate := views.Must(views.ParseFS(templates.FS, "faq.gohtml", "layout.gohtml"))
 	createFAQ := views.Must(views.ParseFS(templates.FS, "faqCreate.gohtml", "layout.gohtml"))
 	signup := views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
+	loginGet := views.Must(views.ParseFS(templates.FS, "signin.gohtml"))
+
 	var userC controller.Users = controller.Users{}
 	userC.Template.New = signup
 
@@ -40,6 +42,9 @@ func main() {
 
 	router.Get("/signup", userC.New)
 	router.Post("/signup", userC.Create)
+
+	router.Get("/signin", controller.StaticHandler(loginGet))
+	router.Post("/signin", userC.LoginPOST)
 
 	router.Get("/", controller.StaticHandler(homeTemplate))
 

@@ -44,3 +44,17 @@ func (us *UserService) CreateUser(name, email, password string) (*User, error) {
 
 	return &use, nil
 }
+
+func (us *UserService) Login(email, password string) (User, error) {
+	var sql string = "SELECT * FROM users WHERE email=$1"
+
+	row := us.DB.QueryRow(sql, email)
+	var userFromQuery User
+	getDataError := row.Scan(&userFromQuery.ID, &userFromQuery.Email, &userFromQuery.Password, &userFromQuery.Name)
+
+	if getDataError != nil {
+		return User{}, getDataError
+	}
+
+	return userFromQuery, nil
+}

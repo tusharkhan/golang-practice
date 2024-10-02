@@ -4,6 +4,7 @@ import (
 	"course/helper"
 	"course/models"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -49,4 +50,36 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(writer).Encode(createdUser)
+}
+
+func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
+	parseError := request.ParseForm()
+
+	if parseError != nil {
+		panic(parseError)
+	}
+
+	var email string = request.FormValue("email")
+	var password string = request.FormValue("password")
+
+	database, databaseConnectionError := helper.ConnectDatabase()
+
+	if databaseConnectionError != nil {
+		panic(databaseConnectionError)
+	}
+
+	defer database.Close()
+
+	var loginUser models.UserService = models.UserService{
+		DB: database,
+	}
+
+	loggedInUser, errorInLogin := loginUser.Login(email, password)
+
+	if errorInLogin != nil {
+		http.Error(writer, errorInLogin.Error(), 500)
+		return
+	}
+
+	fmt.Println(loggedInUser)
 }
