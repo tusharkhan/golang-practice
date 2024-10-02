@@ -1,0 +1,20 @@
+[
+    {
+        "Question": "<h1>What is Go?</h1>",
+        "Answer": "<p>Go is an open-source programming language.</p>",
+        "UserRating": {
+            "User": "Alice",
+            "Email": "alice@example.com",
+            "Image" : "https://loremflickr.com/cache/resized/65535_53392825824_97337ed328_500_150_nofilter.jpg"
+        }
+    },
+    {
+        "Question": "<h1>What is a struct?</h1>",
+        "Answer": "<p>A struct is a collection of fields.</p>",
+        "UserRating": {
+            "User": "Bob",
+            "Email": "bob@example.com",
+            "Image" : "https://loremflickr.com/cache/resized/65535_53036541389_3dfdc0ffa3_500_150_nofilter.jpg"
+        }
+    }
+]

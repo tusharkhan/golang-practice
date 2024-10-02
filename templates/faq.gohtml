@@ -1,0 +1,26 @@
+{{ template "header" .}}
+
+
+<section class="bg-white dark:bg-green-400">
+    <div class="grid mb-8 border border-gray-200 rounded-lg shadow-sm dark:border-gray-700 md:mb-12 md:grid-cols-2 bg-white dark:bg-gray-800">
+        {{ range . }}
+            <figure class="flex flex-col items-center justify-center p-8 text-center bg-white border-b border-gray-200 rounded-t-lg md:rounded-t-none md:rounded-ss-lg md:border-e dark:bg-gray-800 dark:border-gray-700">
+                <blockquote class="max-w-2xl mx-auto mb-4 text-gray-500 lg:mb-8 dark:text-gray-400">
+                    <a class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 mb-5" href="/faq/create">Create</a>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ .Question }} </h3>
+                    <p class="my-4">{{ .Answer }}</p>
+                </blockquote>
+                <figcaption class="flex items-center justify-center ">
+                    <img class="rounded-full w-9 h-9" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/karen-nelson.png" alt="profile picture">
+                    <div class="space-y-0.5 font-medium dark:text-white text-left rtl:text-right ms-3">
+                        <div>{{ .UserRating.User }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400 ">{{ .UserRating.Email }}</div>
+                    </div>
+                </figcaption>    
+            </figure>
+        {{ end }}
+    </div>
+</section>
+  
+
+    {{ template "footer" .}}
