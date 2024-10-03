@@ -82,3 +82,9 @@ func HashString(data string) (string, error) {
 
 	return string(hashData), nil
 }
+
+func CheckPassword(passFromDatabase, passFromInput string) bool {
+	passCheckError := bcrypt.CompareHashAndPassword([]byte(passFromDatabase), []byte(passFromInput))
+
+	return passCheckError == nil
+}

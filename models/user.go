@@ -4,13 +4,15 @@ import (
 	"course/helper"
 	"database/sql"
 	"strings"
+	"time"
 )
 
 type User struct {
-	ID       int
-	Name     string
-	Email    string
-	Password string
+	ID         int
+	Name       string
+	Email      string
+	Password   string
+	Created_at string
 }
 
 type UserService struct {
@@ -22,16 +24,19 @@ func (us *UserService) CreateUser(name, email, password string) (*User, error) {
 
 	pass, hashError := helper.HashString(password)
 
+	created_at := time.Now().Format("2006-01-02 15:04:05")
+
 	if hashError != nil {
 		return nil, hashError
 	}
 
-	insertedRow := us.DB.QueryRow("INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id;", name, emailLower, pass)
+	insertedRow := us.DB.QueryRow("INSERT INTO users (name, email, password, created_at) VALUES ($1, $2, $3, $4) RETURNING id;", name, emailLower, pass, created_at)
 
 	var use User = User{
-		Name:     name,
-		Email:    emailLower,
-		Password: pass,
+		Name:       name,
+		Email:      emailLower,
+		Password:   pass,
+		Created_at: created_at,
 	}
 
 	insertError := insertedRow.Scan(&use.ID)
@@ -45,16 +50,19 @@ func (us *UserService) CreateUser(name, email, password string) (*User, error) {
 	return &use, nil
 }
 
-func (us *UserService) Login(email, password string) (User, error) {
-	var sql string = "SELECT * FROM users WHERE email=$1"
+func (us *UserService) Login(email, password string) (*User, error) {
+	var sql string = "SELECT id, name, email, password, created_at FROM users WHERE email=$1"
+	email = strings.ToLower(email)
 
 	row := us.DB.QueryRow(sql, email)
-	var userFromQuery User
-	getDataError := row.Scan(&userFromQuery.ID, &userFromQuery.Email, &userFromQuery.Password, &userFromQuery.Name)
+	var userFromQuery User = User{
+		Email: email,
+	}
+	getDataError := row.Scan(&userFromQuery.ID, &userFromQuery.Name, &userFromQuery.Email, &userFromQuery.Password, &userFromQuery.Created_at)
 
 	if getDataError != nil {
-		return User{}, getDataError
+		return nil, getDataError
 	}
 
-	return userFromQuery, nil
+	return &userFromQuery, nil
 }

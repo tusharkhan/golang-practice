@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type Users struct {
@@ -59,7 +60,7 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 		panic(parseError)
 	}
 
-	var email string = request.FormValue("email")
+	var email string = strings.ToLower(request.FormValue("email"))
 	var password string = request.FormValue("password")
 
 	database, databaseConnectionError := helper.ConnectDatabase()
@@ -77,9 +78,9 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 	loggedInUser, errorInLogin := loginUser.Login(email, password)
 
 	if errorInLogin != nil {
-		http.Error(writer, errorInLogin.Error(), 500)
-		return
+		panic(errorInLogin)
 	}
 
-	fmt.Println(loggedInUser)
+	passCheck := helper.CheckPassword(loggedInUser.Password, password)
+	fmt.Println(passCheck)
 }
