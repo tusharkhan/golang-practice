@@ -4,7 +4,6 @@ import (
 	"course/helper"
 	"course/models"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -78,9 +77,20 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 	loggedInUser, errorInLogin := loginUser.Login(email, password)
 
 	if errorInLogin != nil {
-		panic(errorInLogin)
+		http.Redirect(writer, request, "/signin", http.StatusSeeOther)
 	}
 
 	passCheck := helper.CheckPassword(loggedInUser.Password, password)
-	fmt.Println(passCheck)
+
+	if !passCheck {
+		http.Redirect(writer, request, "/signin", http.StatusSeeOther)
+	}
+
+	cookie := http.Cookie{
+		Name:  "email",
+		Value: loggedInUser.Email,
+		Path:  "/",
+	}
+
+	http.SetCookie(writer, &cookie)
 }
