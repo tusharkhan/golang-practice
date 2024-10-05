@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/csrf"
 )
 
 type User struct {
@@ -57,5 +58,10 @@ func main() {
 	})
 
 	router.NotFound(notFoundHandler)
-	http.ListenAndServe(":8080", router)
+
+	var csrfString string = "007c4bf36082fc848409e97538568a9f2"
+
+	csrfFunc := csrf.Protect([]byte(csrfString), csrf.Secure(false))
+
+	http.ListenAndServe(":8080", csrfFunc(router))
 }

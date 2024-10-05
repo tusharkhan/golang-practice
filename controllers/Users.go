@@ -4,8 +4,11 @@ import (
 	"course/helper"
 	"course/models"
 	"encoding/json"
+	"html/template"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/csrf"
 )
 
 type Users struct {
@@ -15,7 +18,13 @@ type Users struct {
 }
 
 func (u Users) New(writer http.ResponseWriter, request *http.Request) {
-	u.Template.New.Execute(writer, nil)
+	var data struct {
+		CsrfField template.HTML
+	}
+
+	data.CsrfField = csrf.TemplateField(request)
+
+	u.Template.New.Execute(writer, data)
 }
 
 func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
@@ -87,9 +96,10 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	cookie := http.Cookie{
-		Name:  "email",
-		Value: loggedInUser.Email,
-		Path:  "/",
+		Name:     "email",
+		Value:    loggedInUser.Email,
+		Path:     "/",
+		HttpOnly: true,
 	}
 
 	http.SetCookie(writer, &cookie)
