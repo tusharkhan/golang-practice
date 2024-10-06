@@ -1,8 +1,10 @@
 package views
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -52,14 +54,16 @@ func (t Template) Execute(writer http.ResponseWriter, request *http.Request, dat
 	)
 
 	writer.Header().Set("Content-Type", "text/html charset=UTF-8")
-
-	executeErrpr := htmlTemplate.Execute(writer, data)
+	var buffer bytes.Buffer
+	executeErrpr := htmlTemplate.Execute(&buffer, data)
 
 	if executeErrpr != nil {
 		log.Printf("executing template %v", executeErrpr)
 		http.Error(writer, "There was an error executing template", http.StatusInternalServerError)
 		return
 	}
+
+	io.Copy(writer, &buffer)
 }
 
 func ParseTemplate(filepath string) (Template, error) {
