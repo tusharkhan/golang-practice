@@ -4,11 +4,8 @@ import (
 	"course/helper"
 	"course/models"
 	"encoding/json"
-	"html/template"
 	"net/http"
 	"strings"
-
-	"github.com/gorilla/csrf"
 )
 
 type Users struct {
@@ -18,13 +15,7 @@ type Users struct {
 }
 
 func (u Users) New(writer http.ResponseWriter, request *http.Request) {
-	var data struct {
-		CsrfField template.HTML
-	}
-
-	data.CsrfField = csrf.TemplateField(request)
-
-	u.Template.New.Execute(writer, data)
+	u.Template.New.Execute(writer, request, nil)
 }
 
 func (u Users) Create(writer http.ResponseWriter, request *http.Request) {

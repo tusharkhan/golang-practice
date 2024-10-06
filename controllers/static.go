@@ -16,7 +16,7 @@ var faqModel models.FAQ = models.FAQ{}
 
 func StaticHandler(temp Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		temp.Execute(w, nil)
+		temp.Execute(w, r, nil)
 	}
 }
 
@@ -24,7 +24,7 @@ func FaqHandler(temp Template) http.HandlerFunc {
 	fetAllData := faqModel.Get()
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		temp.Execute(w, fetAllData)
+		temp.Execute(w, r, fetAllData)
 	}
 }
 
@@ -38,7 +38,7 @@ func ShwoFaq(temp Template) http.HandlerFunc {
 			panic(parseError)
 		}
 
-		temp.Execute(w, faqs[intId-1])
+		temp.Execute(w, r, faqs[intId-1])
 	}
 }
 
@@ -76,6 +76,6 @@ func CreateFAQ(writer http.ResponseWriter, request *http.Request) {
 
 func SignupPage(temp Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		temp.Execute(w, nil)
+		temp.Execute(w, r, nil)
 	}
 }
