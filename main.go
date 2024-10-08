@@ -2,6 +2,8 @@ package main
 
 import (
 	controller "course/controllers"
+	"course/helper"
+	"course/models"
 	"course/templates"
 	"course/views"
 	"fmt"
@@ -36,7 +38,26 @@ func main() {
 	signup := views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
 	loginGet := views.Must(views.ParseFS(templates.FS, "signin.gohtml"))
 
+	database, databaseError := helper.ConnectDatabase()
+
+	if databaseError != nil {
+		panic(databaseError)
+	}
+
+	defer database.Close()
+
+	userService := models.UserService{
+		DB: database,
+	}
+
+	sessionService := models.SessionService{
+		DB: database,
+	}
+
 	var userC controller.Users = controller.Users{}
+	userC.SessionService = &sessionService
+	userC.UserService = &userService
+
 	userC.Template.New = signup
 
 	router.Use(middleware.Logger)

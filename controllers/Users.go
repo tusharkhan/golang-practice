@@ -13,6 +13,7 @@ type Users struct {
 		New Template
 	}
 
+	UserService    *models.UserService
 	SessionService *models.SessionService
 }
 
@@ -31,19 +32,7 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 	var email string = request.FormValue("email")
 	var password string = request.FormValue("password")
 
-	database, databaseError := helper.ConnectDatabase()
-
-	if databaseError != nil {
-		panic(databaseError)
-	}
-
-	defer database.Close()
-
-	createUser := models.UserService{
-		DB: database,
-	}
-
-	createdUser, creatingError := createUser.CreateUser(name, email, password)
+	createdUser, creatingError := u.UserService.CreateUser(name, email, password)
 
 	if creatingError != nil {
 		http.Error(writer, creatingError.Error(), http.StatusInternalServerError)
@@ -57,14 +46,7 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 		http.Redirect(writer, request, "/signin", http.StatusFound)
 	}
 
-	cookie := http.Cookie{
-		Name:     "Session",
-		Value:    userSession.Token,
-		Path:     "/",
-		HttpOnly: true,
-	}
-
-	http.SetCookie(writer, &cookie)
+	helper.SetNewCookie(writer, helper.CookieSession, userSession.Token)
 	http.Redirect(writer, request, "/", http.StatusFound)
 	// writer.Header().Set("Content-Type", "application/json")
 
@@ -116,26 +98,20 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	cookie := http.Cookie{
-		Name:     "Session",
-		Value:    createSession.Token,
-		Path:     "/",
-		HttpOnly: true,
-	}
+	helper.SetNewCookie(writer, helper.CookieSession, createSession.Token)
 
-	http.SetCookie(writer, &cookie)
 	http.Redirect(writer, request, "/", http.StatusOK)
 }
 
 func (u Users) CurrentUser(writer http.ResponseWriter, request *http.Request) {
-	token, tokenError := request.Cookie("Session")
+	cookie, tokenError := helper.ReadCookie(request, helper.CookieSession)
 
 	if tokenError != nil {
 		http.Redirect(writer, request, "/signin", http.StatusFound)
 		return
 	}
 
-	user, userError := u.SessionService.User(token.Value)
+	user, userError := u.SessionService.User(cookie)
 
 	if userError != nil {
 		http.Redirect(writer, request, "/signin", http.StatusFound)
