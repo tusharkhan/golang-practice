@@ -23,7 +23,7 @@ func ConnectDatabase() (*sql.DB, error) {
 	var DBPORT string = os.Getenv("DB_PORT")
 
 	// databse connection string
-	var connectionString string = "host=" + DBHOST + " port=" + DBPORT + " user=" + DBUSER + " password=" + DBPASS + " dbname=" + DBNAME
+	var connectionString string = "host=" + DBHOST + " port=" + DBPORT + " user=" + DBUSER + " password=" + DBPASS + " dbname=" + DBNAME + " sslmode=disable"
 
 	db, databaseConnectionError := sql.Open("pgx", connectionString)
 

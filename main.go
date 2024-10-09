@@ -44,19 +44,16 @@ func main() {
 		panic(databaseError)
 	}
 
-	defer database.Close()
+	//defer database.Close()
 
-	userService := models.UserService{
-		DB: database,
+	var userC controller.Users = controller.Users{
+		UserService: &models.UserService{
+			DB: database,
+		},
+		SessionService: &models.SessionService{
+			DB: database,
+		},
 	}
-
-	sessionService := models.SessionService{
-		DB: database,
-	}
-
-	var userC controller.Users = controller.Users{}
-	userC.SessionService = &sessionService
-	userC.UserService = &userService
 
 	userC.Template.New = signup
 
@@ -85,4 +82,6 @@ func main() {
 	csrfFunc := csrf.Protect([]byte(csrfString), csrf.Secure(false))
 
 	http.ListenAndServe(":8080", csrfFunc(router))
+
+	// defer database.Close()
 }

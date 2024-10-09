@@ -42,8 +42,9 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 	userSession, sessionCreateError := u.SessionService.Create(createdUser.ID)
 
 	if sessionCreateError != nil {
-		fmt.Println(sessionCreateError)
-		http.Redirect(writer, request, "/signin", http.StatusFound)
+		http.Error(writer, sessionCreateError.Error(), http.StatusInternalServerError)
+		// http.Redirect(writer, request, "/signup", http.StatusFound)
+		return
 	}
 
 	helper.SetNewCookie(writer, helper.CookieSession, userSession.Token)
