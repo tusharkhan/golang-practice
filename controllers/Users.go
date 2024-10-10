@@ -42,16 +42,12 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 	userSession, sessionCreateError := u.SessionService.Create(createdUser.ID)
 
 	if sessionCreateError != nil {
-		http.Error(writer, sessionCreateError.Error(), http.StatusInternalServerError)
-		// http.Redirect(writer, request, "/signup", http.StatusFound)
+		http.Redirect(writer, request, "/signup", http.StatusFound)
 		return
 	}
 
 	helper.SetNewCookie(writer, helper.CookieSession, userSession.Token)
 	http.Redirect(writer, request, "/", http.StatusFound)
-	// writer.Header().Set("Content-Type", "application/json")
-
-	// json.NewEncoder(writer).Encode(createdUser)
 }
 
 func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {

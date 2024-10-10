@@ -45,8 +45,6 @@ func (us *UserService) CreateUser(name, email, password string) (*User, error) {
 		return nil, insertError
 	}
 
-	us.DB.Close()
-
 	return &use, nil
 }
 

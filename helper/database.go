@@ -3,6 +3,7 @@ package helper
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -40,4 +41,13 @@ func ConnectDatabase() (*sql.DB, error) {
 	fmt.Println("Connected to database...")
 
 	return db, nil
+}
+
+func IsDatabaseClosed(db *sql.DB) bool {
+	err := db.Ping()
+	if err != nil {
+		log.Println("Database connection is closed:", err)
+		return true
+	}
+	return false
 }
