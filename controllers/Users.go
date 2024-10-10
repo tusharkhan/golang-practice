@@ -29,7 +29,7 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var name string = request.FormValue("name")
-	var email string = request.FormValue("email")
+	var email string = strings.ToLower(request.FormValue("email"))
 	var password string = request.FormValue("password")
 
 	createdUser, creatingError := u.UserService.CreateUser(name, email, password)
@@ -116,4 +116,26 @@ func (u Users) CurrentUser(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	fmt.Fprintf(writer, "Current User %s \n", user.Email)
+}
+
+func (u Users) Update(writer http.ResponseWriter, request *http.Request) {
+	var userId string = request.URL.Query().Get("id")
+
+	parseError := request.ParseForm()
+
+	if parseError != nil {
+		panic(parseError)
+	}
+
+	var email string = strings.ToLower(request.FormValue("email"))
+	var name string = request.FormValue("name")
+	var password string = request.FormValue("password")
+
+	update, updateError := u.UserService.UpdateUser(userId, name, email, password)
+
+	// TODO : update user function
+	if updateError != nil {
+		http.Redirect(writer, request, "/", http.StatusInternalServerError)
+	}
+
 }

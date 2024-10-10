@@ -64,3 +64,23 @@ func (us *UserService) Login(email, password string) (*User, error) {
 
 	return &userFromQuery, nil
 }
+
+func (u *UserService) UpdateUser(id, name, email, password string) (*User, error) {
+	var query string = "UPDATE users SET name=$1, email=$2, password=$3 WHERE id=$4"
+	var updatedUser User = User{}
+	pass, hashError := helper.HashString(password)
+
+	if hashError != nil {
+		return nil, hashError
+	}
+
+	row := u.DB.QueryRow(query, name, email, pass, id)
+
+	erro := row.Scan(&updatedUser.ID, &updatedUser.Name, &updatedUser.Email, &updatedUser.Password)
+
+	if erro != nil {
+		return nil, erro
+	}
+
+	return &updatedUser, nil
+}
