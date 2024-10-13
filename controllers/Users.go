@@ -119,23 +119,23 @@ func (u Users) CurrentUser(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (u Users) Update(writer http.ResponseWriter, request *http.Request) {
-	var userId string = request.URL.Query().Get("id")
+	// var userId string = request.URL.Query().Get("id")
 
-	parseError := request.ParseForm()
+	// parseError := request.ParseForm()
 
-	if parseError != nil {
-		panic(parseError)
-	}
+	// if parseError != nil {
+	// 	panic(parseError)
+	// }
 
-	var email string = strings.ToLower(request.FormValue("email"))
-	var name string = request.FormValue("name")
-	var password string = request.FormValue("password")
+	// var email string = strings.ToLower(request.FormValue("email"))
+	// var name string = request.FormValue("name")
+	// var password string = request.FormValue("password")
 
-	update, updateError := u.UserService.UpdateUser(userId, name, email, password)
+	// update, updateError := u.UserService.UpdateUser(userId, name, email, password)
 
-	// TODO : update user function
-	if updateError != nil {
-		http.Redirect(writer, request, "/", http.StatusInternalServerError)
-	}
+	// // TODO : update user function
+	// if updateError != nil {
+	// 	http.Redirect(writer, request, "/", http.StatusInternalServerError)
+	// }
 
 }
