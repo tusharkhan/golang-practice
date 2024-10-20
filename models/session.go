@@ -46,7 +46,24 @@ func (ss *SessionService) Create(use_id int) (*Session, error) {
 }
 
 func (ss *SessionService) User(token string) (*User, error) {
-	return nil, nil
+	var hashToken string = ss.hashToken(token)
+	var userId int
+	var searchQueryString string = "SELECT user_id FROM sessions WHERE token_hash = $1"
+	searchQueryError := ss.DB.QueryRow(searchQueryString, hashToken).Scan(&userId)
+
+	if searchQueryError != nil {
+		return nil, searchQueryError
+	}
+
+	var getUser User = User{}
+	var userQueryString string = "SELECT id, name, email, created_at FROM users WHERE id = $1"
+	getUserQueryError := ss.DB.QueryRow(userQueryString, userId).Scan(&getUser.ID, &getUser.Name, &getUser.Email, &getUser.Created_at)
+
+	if getUserQueryError != nil {
+		return nil, getUserQueryError
+	}
+
+	return &getUser, nil
 }
 
 func (ss *SessionService) hashToken(token string) string {
@@ -90,4 +107,14 @@ func (ss *SessionService) CreateNewToken(session *Session) (*Session, error) {
 	}
 
 	return session, nil
+}
+
+func (ss *SessionService) DestroySession(hashToken string) bool {
+	var tokenString string = ss.hashToken(hashToken)
+
+	var deleteQuery string = "DELETE FROM sessions WHERE token_hash = $1"
+
+	_, deleteError := ss.DB.Exec(deleteQuery, tokenString)
+
+	return (deleteError == nil)
 }

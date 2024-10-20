@@ -60,22 +60,9 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 	var email string = strings.ToLower(request.FormValue("email"))
 	var password string = request.FormValue("password")
 
-	database, databaseConnectionError := helper.ConnectDatabase()
-
-	if databaseConnectionError != nil {
-		panic(databaseConnectionError)
-	}
-
-	defer database.Close()
-
-	var loginUser models.UserService = models.UserService{
-		DB: database,
-	}
-
-	loggedInUser, errorInLogin := loginUser.Login(email, password)
+	loggedInUser, errorInLogin := u.UserService.Login(email, password)
 
 	if errorInLogin != nil {
-		fmt.Errorf("Error in Login %w", errorInLogin)
 		http.Error(writer, "Error in Login User", http.StatusInternalServerError)
 		return
 	}
@@ -90,14 +77,13 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 	createSession, sessionCreateError := u.SessionService.Create(loggedInUser.ID)
 
 	if sessionCreateError != nil {
-		fmt.Errorf("Error in Creating Token %w", errorInLogin)
 		http.Error(writer, "Error in Creating Token", http.StatusInternalServerError)
 		return
 	}
 
 	helper.SetNewCookie(writer, helper.CookieSession, createSession.Token)
 
-	http.Redirect(writer, request, "/", http.StatusOK)
+	http.Redirect(writer, request, "/", http.StatusFound)
 }
 
 func (u Users) CurrentUser(writer http.ResponseWriter, request *http.Request) {
@@ -118,24 +104,26 @@ func (u Users) CurrentUser(writer http.ResponseWriter, request *http.Request) {
 	fmt.Fprintf(writer, "Current User %s \n", user.Email)
 }
 
-func (u Users) Update(writer http.ResponseWriter, request *http.Request) {
-	// var userId string = request.URL.Query().Get("id")
+func (u Users) SignOut(writer http.ResponseWriter, request *http.Request) {
+	cookie, tokenError := helper.ReadCookie(request, helper.CookieSession)
 
-	// parseError := request.ParseForm()
+	if tokenError != nil {
+		http.Redirect(writer, request, "/signin", http.StatusFound)
+		return
+	}
 
-	// if parseError != nil {
-	// 	panic(parseError)
-	// }
+	var tokenHash bool = u.SessionService.DestroySession(cookie)
 
-	// var email string = strings.ToLower(request.FormValue("email"))
-	// var name string = request.FormValue("name")
-	// var password string = request.FormValue("password")
-
-	// update, updateError := u.UserService.UpdateUser(userId, name, email, password)
-
-	// // TODO : update user function
-	// if updateError != nil {
-	// 	http.Redirect(writer, request, "/", http.StatusInternalServerError)
-	// }
-
+	if !tokenHash {
+		http.Error(writer, "Error in signout", http.StatusInternalServerError)
+	} else {
+		http.SetCookie(writer, &http.Cookie{
+			Name:     helper.CookieSession,
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HttpOnly: true,
+		})
+		http.Redirect(writer, request, "/", http.StatusFound)
+	}
 }
