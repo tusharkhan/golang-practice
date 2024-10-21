@@ -65,6 +65,7 @@ func main() {
 	router.Get("/signin", controller.StaticHandler(loginGet))
 	router.Post("/signin", userC.LoginPOST)
 	router.Post("/signout", userC.SignOut)
+	router.Get("/user/me", userC.CurrentUser)
 
 	router.Get("/", controller.StaticHandler(homeTemplate))
 

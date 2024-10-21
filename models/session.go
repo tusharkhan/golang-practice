@@ -47,17 +47,10 @@ func (ss *SessionService) Create(use_id int) (*Session, error) {
 
 func (ss *SessionService) User(token string) (*User, error) {
 	var hashToken string = ss.hashToken(token)
-	var userId int
-	var searchQueryString string = "SELECT user_id FROM sessions WHERE token_hash = $1"
-	searchQueryError := ss.DB.QueryRow(searchQueryString, hashToken).Scan(&userId)
-
-	if searchQueryError != nil {
-		return nil, searchQueryError
-	}
-
 	var getUser User = User{}
-	var userQueryString string = "SELECT id, name, email, created_at FROM users WHERE id = $1"
-	getUserQueryError := ss.DB.QueryRow(userQueryString, userId).Scan(&getUser.ID, &getUser.Name, &getUser.Email, &getUser.Created_at)
+	var query string = `SELECT users.id, users.name, users.email, users.created_at FROM sessions
+		JOIN users ON users.id = sessions.user_id WHERE sessions.token_hash = $1`
+	getUserQueryError := ss.DB.QueryRow(query, hashToken).Scan(&getUser.ID, &getUser.Name, &getUser.Email, &getUser.Created_at)
 
 	if getUserQueryError != nil {
 		return nil, getUserQueryError
