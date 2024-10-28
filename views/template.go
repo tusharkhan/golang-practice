@@ -2,6 +2,8 @@ package views
 
 import (
 	"bytes"
+	"course/context"
+	"course/models"
 	"fmt"
 	"html/template"
 	"io"
@@ -23,6 +25,9 @@ func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
 		template.FuncMap{
 			"csrf": func() template.HTML {
 				return `<! -- tag and ends with a -->`
+			},
+			"currentUser": func() (template.HTML, error) {
+				return "", fmt.Errorf("not implemented")
 			},
 		},
 	)
@@ -49,6 +54,9 @@ func (t Template) Execute(writer http.ResponseWriter, request *http.Request, dat
 		template.FuncMap{
 			"csrf": func() template.HTML {
 				return csrf.TemplateField(request)
+			},
+			"currentUser": func() *models.User {
+				return context.User(request.Context())
 			},
 		},
 	)

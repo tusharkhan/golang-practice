@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"course/context"
 	"course/helper"
 	"course/models"
 	"fmt"
@@ -14,6 +15,10 @@ type Users struct {
 	}
 
 	UserService    *models.UserService
+	SessionService *models.SessionService
+}
+
+type UserMiddleware struct {
 	SessionService *models.SessionService
 }
 
@@ -87,16 +92,10 @@ func (u Users) LoginPOST(writer http.ResponseWriter, request *http.Request) {
 }
 
 func (u Users) CurrentUser(writer http.ResponseWriter, request *http.Request) {
-	cookie, tokenError := helper.ReadCookie(request, helper.CookieSession)
+	ctx := request.Context()
+	user := context.User(ctx)
 
-	if tokenError != nil {
-		http.Redirect(writer, request, "/signin", http.StatusFound)
-		return
-	}
-
-	user, userError := u.SessionService.User(cookie)
-
-	if userError != nil {
+	if user == nil {
 		http.Redirect(writer, request, "/signin", http.StatusFound)
 		return
 	}
@@ -126,4 +125,38 @@ func (u Users) SignOut(writer http.ResponseWriter, request *http.Request) {
 		})
 		http.Redirect(writer, request, "/", http.StatusFound)
 	}
+}
+
+func (umr UserMiddleware) SetUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, tokenReadError := helper.ReadCookie(r, helper.CookieSession)
+		if tokenReadError != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		user, userError := umr.SessionService.User(token)
+		if userError != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := r.Context()
+		ctx = context.WithUser(ctx, user)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (umr UserMiddleware) RequireUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.User(r.Context())
+
+		if user == nil {
+			http.Redirect(w, r, "/signin", http.StatusFound)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

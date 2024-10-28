@@ -29,15 +29,7 @@ func notFoundHandler(writer http.ResponseWriter, request *http.Request) {
 }
 
 func main() {
-	router := chi.NewRouter()
-
-	homeTemplate := views.Must(views.ParseFS(templates.FS, "home.gohtml", "layout.gohtml"))
-	contactTemplate := views.Must(views.ParseFS(templates.FS, "contact.gohtml", "layout.gohtml"))
-	faqTemplate := views.Must(views.ParseFS(templates.FS, "faq.gohtml", "layout.gohtml"))
-	createFAQ := views.Must(views.ParseFS(templates.FS, "faqCreate.gohtml", "layout.gohtml"))
-	signup := views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
-	loginGet := views.Must(views.ParseFS(templates.FS, "signin.gohtml"))
-
+	// database
 	database, databaseError := helper.ConnectDatabase()
 
 	if databaseError != nil {
@@ -46,6 +38,7 @@ func main() {
 
 	defer database.Close()
 
+	// controllers and services
 	var userC controller.Users = controller.Users{
 		UserService: &models.UserService{
 			DB: database,
@@ -55,6 +48,26 @@ func main() {
 		},
 	}
 
+	var umr controller.UserMiddleware = controller.UserMiddleware{
+		SessionService: userC.SessionService,
+	}
+
+	// middleware
+	var csrfString string = "007c4bf36082fc848409e97538568a9f2"
+
+	csrfFunc := csrf.Protect([]byte(csrfString), csrf.Secure(false))
+
+	router := chi.NewRouter()
+
+	router.Use(csrfFunc)
+	router.Use(umr.SetUser)
+
+	homeTemplate := views.Must(views.ParseFS(templates.FS, "home.gohtml", "layout.gohtml"))
+	contactTemplate := views.Must(views.ParseFS(templates.FS, "contact.gohtml", "layout.gohtml"))
+	faqTemplate := views.Must(views.ParseFS(templates.FS, "faq.gohtml", "layout.gohtml"))
+	createFAQ := views.Must(views.ParseFS(templates.FS, "faqCreate.gohtml", "layout.gohtml"))
+	signup := views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
+	loginGet := views.Must(views.ParseFS(templates.FS, "signin.gohtml"))
 	userC.Template.New = signup
 
 	router.Use(middleware.Logger)
@@ -65,7 +78,10 @@ func main() {
 	router.Get("/signin", controller.StaticHandler(loginGet))
 	router.Post("/signin", userC.LoginPOST)
 	router.Post("/signout", userC.SignOut)
-	router.Get("/user/me", userC.CurrentUser)
+	router.Route("/user/me", func(r chi.Router) {
+		r.Use(umr.RequireUser)
+		r.Get("/", userC.CurrentUser)
+	})
 
 	router.Get("/", controller.StaticHandler(homeTemplate))
 
@@ -78,10 +94,5 @@ func main() {
 	})
 
 	router.NotFound(notFoundHandler)
-
-	var csrfString string = "007c4bf36082fc848409e97538568a9f2"
-
-	csrfFunc := csrf.Protect([]byte(csrfString), csrf.Secure(false))
-
-	http.ListenAndServe(":8080", csrfFunc(router))
+	http.ListenAndServe(":8080", router)
 }
