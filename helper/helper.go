@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -87,4 +89,15 @@ func CheckPassword(passFromDatabase, passFromInput string) bool {
 	passCheckError := bcrypt.CompareHashAndPassword([]byte(passFromDatabase), []byte(passFromInput))
 
 	return passCheckError == nil
+}
+
+func BaseURL(r *http.Request) string {
+	// Determine the scheme (http or https)
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+
+	// Construct the base URL
+	return fmt.Sprintf("%s://%s", scheme, r.Host)
 }

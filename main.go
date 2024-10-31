@@ -46,6 +46,9 @@ func main() {
 		SessionService: &models.SessionService{
 			DB: database,
 		},
+		PasswordResetService: &models.PasswordResetService{
+			DB: database,
+		},
 	}
 
 	var umr controller.UserMiddleware = controller.UserMiddleware{
@@ -66,9 +69,9 @@ func main() {
 	contactTemplate := views.Must(views.ParseFS(templates.FS, "contact.gohtml", "layout.gohtml"))
 	faqTemplate := views.Must(views.ParseFS(templates.FS, "faq.gohtml", "layout.gohtml"))
 	createFAQ := views.Must(views.ParseFS(templates.FS, "faqCreate.gohtml", "layout.gohtml"))
-	signup := views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
+	userC.Template.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
 	loginGet := views.Must(views.ParseFS(templates.FS, "signin.gohtml"))
-	userC.Template.New = signup
+	userC.Template.ForgetPasswordRequestForm = views.Must(views.ParseFS(templates.FS, "requestForgetPassword.gohtml"))
 
 	router.Use(middleware.Logger)
 
@@ -78,6 +81,10 @@ func main() {
 	router.Get("/signin", controller.StaticHandler(loginGet))
 	router.Post("/signin", userC.LoginPOST)
 	router.Post("/signout", userC.SignOut)
+
+	router.Get("/forget-password", userC.ForgetPasswordRequestForm)
+	router.Post("/forget-password", userC.ForgetPasswordRequest)
+
 	router.Route("/user/me", func(r chi.Router) {
 		r.Use(umr.RequireUser)
 		r.Get("/", userC.CurrentUser)

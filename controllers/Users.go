@@ -6,16 +6,20 @@ import (
 	"course/models"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 type Users struct {
 	Template struct {
-		New Template
+		New                       Template
+		ForgetPasswordRequestForm Template
 	}
 
-	UserService    *models.UserService
-	SessionService *models.SessionService
+	UserService          *models.UserService
+	SessionService       *models.SessionService
+	PasswordResetService *models.PasswordResetService
+	EmailService         *models.EmailService
 }
 
 type UserMiddleware struct {
@@ -125,6 +129,40 @@ func (u Users) SignOut(writer http.ResponseWriter, request *http.Request) {
 		})
 		http.Redirect(writer, request, "/", http.StatusFound)
 	}
+}
+
+func (u Users) ForgetPasswordRequestForm(w http.ResponseWriter, r *http.Request) {
+	u.Template.ForgetPasswordRequestForm.Execute(w, r, nil)
+}
+
+func (u Users) ForgetPasswordRequest(w http.ResponseWriter, r *http.Request) {
+	parseError := r.ParseForm()
+
+	if parseError != nil {
+		panic(parseError)
+	}
+
+	var email string = r.FormValue("email")
+
+	passReset, passwordResetError := u.PasswordResetService.Create(email)
+
+	if passwordResetError != nil {
+		http.Error(w, "Something went wrong creating token", http.StatusInternalServerError)
+		return
+	}
+
+	userlWithToken := url.Values{
+		"token": {passReset.Token},
+	}
+	var resetUrl string = helper.BaseURL(r) + "/forget" + userlWithToken.Encode()
+	sendingMailError := u.EmailService.SendForgetPasswordEmail(email, resetUrl)
+
+	if sendingMailError != nil {
+		http.Error(w, "Something went wrong sending mail", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusFound)
 }
 
 func (umr UserMiddleware) SetUser(next http.Handler) http.Handler {
