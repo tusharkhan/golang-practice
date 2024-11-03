@@ -2,7 +2,10 @@ package models
 
 import (
 	"course/helper"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -83,4 +86,20 @@ func (u *UserService) UpdateUser(id, name, email, password string) (*User, error
 	}
 
 	return &updatedUser, nil
+}
+
+func (u *UserService) CheckPasswordResetToken(token string) (int, error) {
+	tok := sha256.Sum256([]byte(token))
+	hashToken := base64.URLEncoding.EncodeToString(tok[:])
+	fmt.Println(hashToken)
+	var res int
+	var tokenMatchQuery string = "SELECT user_id FROM password_resets WHERE token_hash = $1 AND expires_at >= NOW()"
+
+	err := u.DB.QueryRow(tokenMatchQuery, hashToken).Scan(&res)
+
+	if err != nil {
+		return 0, fmt.Errorf("Error in checking token", err)
+	}
+
+	return res, nil
 }

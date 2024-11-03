@@ -7,13 +7,19 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type Users struct {
 	Template struct {
 		New                       Template
 		ForgetPasswordRequestForm Template
+		ForgetPasswordSuccess     Template
+		ChangePasswordView        Template
 	}
 
 	UserService          *models.UserService
@@ -154,7 +160,26 @@ func (u Users) ForgetPasswordRequest(w http.ResponseWriter, r *http.Request) {
 	userlWithToken := url.Values{
 		"token": {passReset.Token},
 	}
-	var resetUrl string = helper.BaseURL(r) + "/forget" + userlWithToken.Encode()
+	var resetUrl string = helper.BaseURL(r) + "/forget?" + userlWithToken.Encode()
+	envLoadingError := godotenv.Load()
+
+	if envLoadingError != nil {
+		panic(envLoadingError)
+	}
+
+	mailPort, err := strconv.Atoi(os.Getenv("MAIL_PORT"))
+	if err != nil {
+		fmt.Println("Conversion error:", err)
+		return
+	}
+
+	u.EmailService = models.NewMailService(models.SMTPConfig{
+		Host: os.Getenv("MAIL_HOST"),
+		Port: mailPort,
+		User: os.Getenv("MAIL_USER"),
+		Pass: os.Getenv("MAIL_PASS"),
+	})
+
 	sendingMailError := u.EmailService.SendForgetPasswordEmail(email, resetUrl)
 
 	if sendingMailError != nil {
@@ -162,9 +187,52 @@ func (u Users) ForgetPasswordRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusFound)
+	http.Redirect(w, r, "/forget-password-success", http.StatusFound)
 }
 
+func (u Users) ForgetPasswordRequestSuccess(w http.ResponseWriter, r *http.Request) {
+	u.Template.ForgetPasswordSuccess.Execute(w, r, nil)
+}
+
+func (u Users) ChangePasswordView(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Token string
+	}
+
+	data.Token = r.URL.Query().Get("token")
+
+	u.Template.ChangePasswordView.Execute(w, r, data)
+}
+
+func (u Users) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	parseError := r.ParseForm()
+
+	if parseError != nil {
+		panic(parseError)
+	}
+
+	var token string = r.FormValue("token")
+	var password string = r.FormValue("password")
+
+	tokenExist, err := u.UserService.CheckPasswordResetToken(token)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(tokenExist)
+	if tokenExist > 0 {
+		u.PasswordResetService.SessionService = u.SessionService
+		_, changePassError := u.PasswordResetService.Consume(password, tokenExist)
+
+		if changePassError != nil {
+			panic(changePassError)
+		}
+
+		http.Redirect(w, r, "/signin", http.StatusFound)
+	}
+
+}
+
+// user middleware
 func (umr UserMiddleware) SetUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, tokenReadError := helper.ReadCookie(r, helper.CookieSession)

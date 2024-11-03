@@ -72,6 +72,8 @@ func main() {
 	userC.Template.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml"))
 	loginGet := views.Must(views.ParseFS(templates.FS, "signin.gohtml"))
 	userC.Template.ForgetPasswordRequestForm = views.Must(views.ParseFS(templates.FS, "requestForgetPassword.gohtml"))
+	userC.Template.ForgetPasswordSuccess = views.Must(views.ParseFS(templates.FS, "requestForgetPasswordSuccess.gohtml"))
+	userC.Template.ChangePasswordView = views.Must(views.ParseFS(templates.FS, "requestForgetPasswordChange.gohtml"))
 
 	router.Use(middleware.Logger)
 
@@ -84,6 +86,10 @@ func main() {
 
 	router.Get("/forget-password", userC.ForgetPasswordRequestForm)
 	router.Post("/forget-password", userC.ForgetPasswordRequest)
+
+	router.Get("/forget-password-success", userC.ForgetPasswordRequestSuccess)
+	router.Get("/forget", userC.ChangePasswordView)
+	router.Post("/change-pass", userC.ChangePassword)
 
 	router.Route("/user/me", func(r chi.Router) {
 		r.Use(umr.RequireUser)
