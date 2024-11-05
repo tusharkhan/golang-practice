@@ -5,9 +5,17 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+var (
+	EmailAlreadyTaken = errors.New("models : Email already taken")
 )
 
 type User struct {
@@ -45,6 +53,14 @@ func (us *UserService) CreateUser(name, email, password string) (*User, error) {
 	insertError := insertedRow.Scan(&use.ID)
 
 	if insertError != nil {
+		var pgError *pgconn.PgError
+
+		if errors.As(insertError, &pgError) {
+			if pgError.Code == pgerrcode.UniqueViolation {
+				return nil, EmailAlreadyTaken
+			}
+		}
+
 		return nil, insertError
 	}
 

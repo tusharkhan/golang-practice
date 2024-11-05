@@ -2,6 +2,7 @@ package controller
 
 import (
 	"course/context"
+	"course/errors"
 	"course/helper"
 	"course/models"
 	"fmt"
@@ -50,7 +51,10 @@ func (u Users) Create(writer http.ResponseWriter, request *http.Request) {
 	createdUser, creatingError := u.UserService.CreateUser(name, email, password)
 
 	if creatingError != nil {
-		http.Error(writer, creatingError.Error(), http.StatusInternalServerError)
+		if errors.Is(creatingError, models.EmailAlreadyTaken) {
+			creatingError = errors.Public(creatingError, "Email already taken")
+		}
+		u.Template.New.Execute(writer, request, nil, creatingError)
 		return
 	}
 

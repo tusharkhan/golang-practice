@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"course/context"
 	"course/models"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -13,6 +14,10 @@ import (
 
 	"github.com/gorilla/csrf"
 )
+
+type PublicError interface {
+	Public() string
+}
 
 type Template struct {
 	htmlTemplate *template.Template
@@ -29,6 +34,9 @@ func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
 			"currentUser": func() (template.HTML, error) {
 				return "", fmt.Errorf("not implemented")
 			},
+			"errors": func() []string {
+				return nil
+			},
 		},
 	)
 
@@ -41,7 +49,7 @@ func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
 	}, nil
 }
 
-func (t Template) Execute(writer http.ResponseWriter, request *http.Request, data interface{}) {
+func (t Template) Execute(writer http.ResponseWriter, request *http.Request, data interface{}, err ...error) {
 	htmlTemplate, templateCloneError := t.htmlTemplate.Clone()
 
 	if templateCloneError != nil {
@@ -49,7 +57,7 @@ func (t Template) Execute(writer http.ResponseWriter, request *http.Request, dat
 		http.Error(writer, "Error in rendering template", http.StatusInternalServerError)
 		return
 	}
-
+	var errorMessages []string = PrintErrorMessages(err...)
 	htmlTemplate = htmlTemplate.Funcs(
 		template.FuncMap{
 			"csrf": func() template.HTML {
@@ -57,6 +65,9 @@ func (t Template) Execute(writer http.ResponseWriter, request *http.Request, dat
 			},
 			"currentUser": func() *models.User {
 				return context.User(request.Context())
+			},
+			"errors": func() []string {
+				return errorMessages
 			},
 		},
 	)
@@ -92,4 +103,19 @@ func Must(t Template, err error) Template {
 	}
 
 	return t
+}
+
+func PrintErrorMessages(err ...error) []string {
+	var errorMessages []string
+
+	for _, message := range err {
+		var pubError PublicError
+		if errors.As(message, &pubError) {
+			errorMessages = append(errorMessages, pubError.Public())
+		} else {
+			errorMessages = append(errorMessages, "Something went wrong")
+		}
+	}
+
+	return errorMessages
 }
