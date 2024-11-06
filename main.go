@@ -51,6 +51,12 @@ func main() {
 		},
 	}
 
+	var galleryController controller.Galleries = controller.Galleries{
+		GalleryService: &models.GalleryService{
+			DB: database,
+		},
+	}
+
 	var umr controller.UserMiddleware = controller.UserMiddleware{
 		SessionService: userC.SessionService,
 	}
@@ -74,6 +80,8 @@ func main() {
 	userC.Template.ForgetPasswordRequestForm = views.Must(views.ParseFS(templates.FS, "requestForgetPassword.gohtml"))
 	userC.Template.ForgetPasswordSuccess = views.Must(views.ParseFS(templates.FS, "requestForgetPasswordSuccess.gohtml"))
 	userC.Template.ChangePasswordView = views.Must(views.ParseFS(templates.FS, "requestForgetPasswordChange.gohtml"))
+
+	galleryController.Template.New = views.Must(views.ParseFS(templates.FS, "galleryCreate.gohtml", "layout.gohtml"))
 
 	router.Use(middleware.Logger)
 
@@ -104,6 +112,14 @@ func main() {
 		r.Get("/", controller.FaqHandler(faqTemplate))
 		r.Get("/create", controller.FaqHandler(createFAQ))
 		r.Post("/create", controller.CreateFAQ)
+	})
+
+	router.Route("/gallery", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Use(umr.RequireUser)
+			r.Get("/create", galleryController.New)
+			r.Post("/create", galleryController.Create)
+		})
 	})
 
 	router.NotFound(notFoundHandler)

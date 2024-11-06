@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gorilla/csrf"
 )
@@ -24,7 +25,7 @@ type Template struct {
 }
 
 func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
-	htmlTpl := template.New(pattern[0])
+	htmlTpl := template.New(filepath.Base(pattern[0]))
 
 	htmlTpl = htmlTpl.Funcs(
 		template.FuncMap{
@@ -107,13 +108,15 @@ func Must(t Template, err error) Template {
 
 func PrintErrorMessages(err ...error) []string {
 	var errorMessages []string
-
+	fmt.Println(err)
 	for _, message := range err {
-		var pubError PublicError
-		if errors.As(message, &pubError) {
-			errorMessages = append(errorMessages, pubError.Public())
-		} else {
-			errorMessages = append(errorMessages, "Something went wrong")
+		if message != nil {
+			var pubError PublicError
+			if errors.As(message, &pubError) {
+				errorMessages = append(errorMessages, pubError.Public())
+			} else {
+				errorMessages = append(errorMessages, "Something went wrong")
+			}
 		}
 	}
 

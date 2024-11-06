@@ -14,10 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-var (
-	EmailAlreadyTaken = errors.New("models : Email already taken")
-)
-
 type User struct {
 	ID         int
 	Name       string
