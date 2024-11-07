@@ -117,8 +117,11 @@ func main() {
 	router.Route("/gallery", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(umr.RequireUser)
-			r.Get("/create", galleryController.New)
+			r.Get("/", galleryController.New)
 			r.Post("/create", galleryController.Create)
+			r.Get("/delete/{id}", galleryController.Delete)
+			r.Get("/{id}/edit", galleryController.Edit)
+			r.Post("/{id}/edit", galleryController.EditPost)
 		})
 	})
 

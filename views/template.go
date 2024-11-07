@@ -3,6 +3,7 @@ package views
 import (
 	"bytes"
 	"course/context"
+	"course/helper"
 	"course/models"
 	"errors"
 	"fmt"
@@ -38,6 +39,10 @@ func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
 			"errors": func() []string {
 				return nil
 			},
+			"FormateDateTime": helper.FormateDateTime,
+			"currentUrl" : func () string {
+				return ""
+			},
 		},
 	)
 
@@ -52,6 +57,7 @@ func ParseFS(fs fs.FS, pattern ...string) (Template, error) {
 
 func (t Template) Execute(writer http.ResponseWriter, request *http.Request, data interface{}, err ...error) {
 	htmlTemplate, templateCloneError := t.htmlTemplate.Clone()
+	var currentUrl string = request.URL.Path
 
 	if templateCloneError != nil {
 		log.Printf("template cloning error %v", templateCloneError)
@@ -69,6 +75,10 @@ func (t Template) Execute(writer http.ResponseWriter, request *http.Request, dat
 			},
 			"errors": func() []string {
 				return errorMessages
+			},
+			"FormateDateTime": helper.FormateDateTime,
+			"currentUrl" : func () string {
+				return currentUrl
 			},
 		},
 	)
@@ -108,7 +118,7 @@ func Must(t Template, err error) Template {
 
 func PrintErrorMessages(err ...error) []string {
 	var errorMessages []string
-	fmt.Println(err)
+
 	for _, message := range err {
 		if message != nil {
 			var pubError PublicError

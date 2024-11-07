@@ -1,12 +1,14 @@
 package helper
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -100,4 +102,20 @@ func BaseURL(r *http.Request) string {
 
 	// Construct the base URL
 	return fmt.Sprintf("%s://%s", scheme, r.Host)
+}
+
+func ResponseJSON(w http.ResponseWriter, r *http.Request, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(data)
+}
+
+func FormateDateTime(realDate, formta string) (string, error) {
+	strTiem, timeError := time.Parse(time.RFC3339, realDate)
+
+	if timeError != nil {
+		panic(timeError)
+	}
+
+	return strTiem.Format(formta), nil
 }

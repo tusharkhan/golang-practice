@@ -8,10 +8,11 @@ import (
 )
 
 type Gallery struct {
-	ID        int
-	UserID    int
-	Title     string
-	CreatedAt string
+	ID        int    `json:"id"`
+	UserID    int    `json:"userId`
+	Title     string `json:"title"`
+	CreatedAt string `json:"created_at"`
+	User      User   `json:"user"`
 }
 
 type GalleryService struct {
@@ -51,6 +52,32 @@ func (gs *GalleryService) Show(id int) (*Gallery, error) {
 	}
 
 	return &gall, nil
+}
+
+func (gs *GalleryService) List() ([]Gallery, error) {
+	var listQuery string = `SELECT galleries.id, galleries.title, galleries.user_id, galleries.created_at, users.name FROM galleries 
+	LEFT JOIN users ON users.id = galleries.user_id`
+
+	rows, listQueryError := gs.DB.Query(listQuery)
+
+	if listQueryError != nil {
+		return nil, fmt.Errorf("error in getting gallery list %w", listQueryError)
+	}
+
+	var galleries []Gallery
+
+	for rows.Next() {
+		var gal Gallery
+		err := rows.Scan(&gal.ID, &gal.Title, &gal.UserID, &gal.CreatedAt, &gal.User.Name)
+
+		if err != nil {
+			return nil, fmt.Errorf("error in fetching gallery %w", err)
+		}
+
+		galleries = append(galleries, gal)
+	}
+
+	return galleries, nil
 }
 
 func (gs *GalleryService) GetByUser(user_id int) ([]Gallery, error) {
