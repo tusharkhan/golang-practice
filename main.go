@@ -82,6 +82,7 @@ func main() {
 	userC.Template.ChangePasswordView = views.Must(views.ParseFS(templates.FS, "requestForgetPasswordChange.gohtml"))
 
 	galleryController.Template.New = views.Must(views.ParseFS(templates.FS, "galleryCreate.gohtml", "layout.gohtml"))
+	galleryController.Template.Show = views.Must(views.ParseFS(templates.FS, "gallerySingle.gohtml", "layout.gohtml"))
 
 	router.Use(middleware.Logger)
 
@@ -120,8 +121,10 @@ func main() {
 			r.Get("/", galleryController.New)
 			r.Post("/create", galleryController.Create)
 			r.Get("/delete/{id}", galleryController.Delete)
+			r.Get("/{id}/show", galleryController.Show)
 			r.Get("/{id}/edit", galleryController.Edit)
 			r.Post("/{id}/edit", galleryController.EditPost)
+			r.Get("/{galleryid}/images/{filename}", galleryController.RenderImage)
 		})
 	})
 

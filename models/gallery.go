@@ -1,9 +1,11 @@
 package models
 
 import (
+	"course/helper"
 	"database/sql"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"time"
 )
 
@@ -15,8 +17,16 @@ type Gallery struct {
 	User      User   `json:"user"`
 }
 
+type Image struct {
+	Path      string
+	GalleryId int
+	FileName  string
+}
+
 type GalleryService struct {
 	DB *sql.DB
+
+	ImageDirectory string
 }
 
 func (gs *GalleryService) Create(title string, user_id int) (*Gallery, error) {
@@ -126,7 +136,7 @@ func (gs *GalleryService) Update(gall *Gallery) error {
 	return nil
 }
 
-func (gs GalleryService) Delete(id int) error {
+func (gs *GalleryService) Delete(id int) error {
 	var galleryDeleteQuery string = "DELETE FROM galleries WHERE id=$1"
 
 	_, deleteError := gs.DB.Exec(galleryDeleteQuery, id)
@@ -136,4 +146,36 @@ func (gs GalleryService) Delete(id int) error {
 	}
 
 	return nil
+}
+
+func (gs *GalleryService) GalleryDire(id int) string {
+	var imgDir string = gs.ImageDirectory
+	if imgDir == "" {
+		imgDir = "images"
+	}
+
+	return filepath.Join(imgDir, fmt.Sprintf("gallery-%d", id))
+}
+
+func (gs *GalleryService) Images(galleryId int) ([]Image, error) {
+	globPattern := filepath.Join(gs.GalleryDire(galleryId), "*")
+	allFiles, fileFetchError := filepath.Glob(globPattern)
+
+	if fileFetchError != nil {
+		return nil, fmt.Errorf("error in fetching file data %w", fileFetchError)
+	}
+
+	var imagePaths []Image
+
+	for _, fil := range allFiles {
+		if helper.HasExtension(fil, []string{".png", ".jpg", ".jpeg", "gif"}) {
+			imagePaths = append(imagePaths, Image{
+				Path: fil,
+				GalleryId: galleryId,
+				FileName: filepath.Base(fil),
+			})
+		}
+	}
+
+	return imagePaths, nil
 }

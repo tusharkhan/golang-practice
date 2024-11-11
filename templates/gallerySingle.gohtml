@@ -1,0 +1,14 @@
+{{ template "header" . }}
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+    {{ range .Images }}
+    <div>
+        <a href="/gallery/{{.GalleryId}}/images/{{.FileName}}">
+            <img class="h-auto max-w-full rounded-lg" src="/gallery/{{.GalleryId}}/images/{{.FileName}}"
+            alt="{{.FileName}}">
+        </a>
+    </div>
+    {{end}}
+</div>
+
+{{ template "footer" . }}

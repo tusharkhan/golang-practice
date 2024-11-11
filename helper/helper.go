@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -118,4 +119,17 @@ func FormateDateTime(realDate, formta string) (string, error) {
 	}
 
 	return strTiem.Format(formta), nil
+}
+
+func HasExtension(file string, extensions []string) bool {
+	for _, ext := range extensions {
+		file = strings.ToLower(file)
+		ext  = strings.ToLower(ext)
+
+		if filepath.Ext(file) == ext {
+			return true
+		}
+	}
+
+	return false
 }

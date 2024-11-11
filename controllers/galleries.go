@@ -4,7 +4,9 @@ import (
 	"course/context"
 	"course/helper"
 	"course/models"
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -12,7 +14,8 @@ import (
 
 type Galleries struct {
 	Template struct {
-		New Template
+		New  Template
+		Show Template
 	}
 
 	GalleryService *models.GalleryService
@@ -109,4 +112,50 @@ func (g Galleries) EditPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/gallery", http.StatusFound)
+}
+
+func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Id    int
+		Title string
+		Images []models.Image
+	}
+
+	id, urlParamError := strconv.Atoi(chi.URLParam(r, "id"))
+
+	if urlParamError != nil {
+		http.Error(w, "Invalide url param", http.StatusInternalServerError)
+	}
+
+	singleGallery, singleGalleryError := g.GalleryService.Show(id)
+
+	if singleGalleryError != nil {
+		g.Template.New.Execute(w, r, nil, singleGalleryError)
+	}
+
+	galleryImages, galleryImagesError := g.GalleryService.Images(id)
+
+	if galleryImagesError != nil {
+		g.Template.New.Execute(w, r, nil, singleGalleryError)
+	}
+
+	data.Id = singleGallery.ID
+	data.Title = singleGallery.Title
+	data.Images = galleryImages
+
+	g.Template.Show.Execute(w, r, data, nil)
+}
+
+func (g Galleries) RenderImage(w http.ResponseWriter, r *http.Request) {
+	filename := chi.URLParam(r, "filename")
+	galleryid, urlParamError := strconv.Atoi(chi.URLParam(r, "galleryid"))
+
+	if urlParamError != nil {
+		http.Error(w, "Invalide url param", http.StatusInternalServerError)
+	}
+
+	filepa := g.GalleryService.GalleryDire(galleryid)
+	realPath := filepath.Join(filepa, filename)
+fmt.Println(realPath)
+	http.ServeFile(w, r, realPath)
 }
