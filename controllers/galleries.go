@@ -4,7 +4,6 @@ import (
 	"course/context"
 	"course/helper"
 	"course/models"
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -116,8 +115,8 @@ func (g Galleries) EditPost(w http.ResponseWriter, r *http.Request) {
 
 func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 	var data struct {
-		Id    int
-		Title string
+		Id     int
+		Title  string
 		Images []models.Image
 	}
 
