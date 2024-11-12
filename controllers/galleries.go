@@ -156,6 +156,6 @@ func (g Galleries) RenderImage(w http.ResponseWriter, r *http.Request) {
 
 	filepa := g.GalleryService.GalleryDire(galleryid)
 	realPath := filepath.Join(filepa, filename)
-fmt.Println(realPath)
+
 	http.ServeFile(w, r, realPath)
 }
