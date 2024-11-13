@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"time"
 )
@@ -170,12 +172,39 @@ func (gs *GalleryService) Images(galleryId int) ([]Image, error) {
 	for _, fil := range allFiles {
 		if helper.HasExtension(fil, []string{".png", ".jpg", ".jpeg", "gif"}) {
 			imagePaths = append(imagePaths, Image{
-				Path: fil,
+				Path:      fil,
 				GalleryId: galleryId,
-				FileName: filepath.Base(fil),
+				FileName:  filepath.Base(fil),
 			})
 		}
 	}
 
 	return imagePaths, nil
+}
+
+func (gs *GalleryService) UploadImage(galleryId int, fileNmae string, content io.Reader) (string, error) {
+	var galleryDir string = gs.GalleryDire(galleryId)
+	directoryCreatingError := os.MkdirAll(galleryDir, 0775)
+
+	if directoryCreatingError != nil {
+		return "", fmt.Errorf("error in creating gallery directory %w", directoryCreatingError)
+	}
+
+	var imagePath string = filepath.Join(galleryDir, fileNmae)
+
+	createImage, createImageError := os.Create(imagePath)
+
+	if createImageError != nil {
+		return "", fmt.Errorf("error in creating image %w", createImageError)
+	}
+
+	defer createImage.Close()
+
+	_, imageCopyError := io.Copy(createImage, content)
+
+	if imageCopyError != nil {
+		return "", fmt.Errorf("error in copying imaeg to directory %w", imageCopyError)
+	}
+
+	return imagePath, nil
 }

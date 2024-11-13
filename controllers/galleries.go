@@ -4,6 +4,7 @@ import (
 	"course/context"
 	"course/helper"
 	"course/models"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -45,11 +46,37 @@ func (g Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	var title string = r.FormValue("title")
 
-	_, createGalleryError := g.GalleryService.Create(title, userId)
+	createdGallery, createGalleryError := g.GalleryService.Create(title, userId)
 
 	if createGalleryError != nil {
 		g.Template.New.Execute(w, r, nil, createGalleryError)
 	}
+
+	multipartParsingError := r.ParseMultipartForm(5 << 20)
+
+	if multipartParsingError != nil {
+		g.Template.New.Execute(w, r, nil, models.MaxImageSizeError)
+	}
+
+	fileHeaders := r.MultipartForm.File["gaslleryImages"]
+	var uploadedImageName []string
+	for _, fileHeader := range fileHeaders {
+		file, err := fileHeader.Open()
+		if err != nil {
+			g.Template.New.Execute(w, r, nil, models.InternalServerError)
+		}
+		defer file.Close()
+
+		uploadedImage, imageUploadError := g.GalleryService.UploadImage(createdGallery.ID, fileHeader.Filename, file)
+
+		if imageUploadError != nil {
+			g.Template.New.Execute(w, r, nil, imageUploadError)
+		}
+
+		uploadedImageName = append(uploadedImageName, uploadedImage)
+	}
+
+	fmt.Println(uploadedImageName)
 
 	http.Redirect(w, r, "/gallery", http.StatusFound)
 }
