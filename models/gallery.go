@@ -2,10 +2,12 @@ package models
 
 import (
 	"course/helper"
+	"github.com/google/uuid"
 	"database/sql"
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
@@ -23,6 +25,14 @@ type Image struct {
 	Path      string
 	GalleryId int
 	FileName  string
+}
+
+type GalleryImages struct {
+	GalleryId    int
+	RealName     string
+	GenerateName string
+	FileSize     int64
+	CreatedAt    string
 }
 
 type GalleryService struct {
@@ -182,20 +192,28 @@ func (gs *GalleryService) Images(galleryId int) ([]Image, error) {
 	return imagePaths, nil
 }
 
-func (gs *GalleryService) UploadImage(galleryId int, fileNmae string, content io.Reader) (string, error) {
+func (gs *GalleryService) UploadImage(galleryId int, fileHerder *multipart.FileHeader, content io.Reader) (*GalleryImages, error) {
 	var galleryDir string = gs.GalleryDire(galleryId)
 	directoryCreatingError := os.MkdirAll(galleryDir, 0775)
 
-	if directoryCreatingError != nil {
-		return "", fmt.Errorf("error in creating gallery directory %w", directoryCreatingError)
+	var ImageInfo GalleryImages = GalleryImages{
+		RealName:  fileHerder.Filename,
+		FileSize:  fileHerder.Size,
+		GalleryId: galleryId,
+		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
 	}
 
-	var imagePath string = filepath.Join(galleryDir, fileNmae)
+	if directoryCreatingError != nil {
+		return nil, fmt.Errorf("error in creating gallery directory %w", directoryCreatingError)
+	}
+
+	ImageInfo.GenerateName = uuid.New().String() + filepath.Ext(fileHerder.Filename)
+	var imagePath string = filepath.Join(galleryDir, ImageInfo.GenerateName)
 
 	createImage, createImageError := os.Create(imagePath)
 
 	if createImageError != nil {
-		return "", fmt.Errorf("error in creating image %w", createImageError)
+		return nil, fmt.Errorf("error in creating image %w", createImageError)
 	}
 
 	defer createImage.Close()
@@ -203,8 +221,33 @@ func (gs *GalleryService) UploadImage(galleryId int, fileNmae string, content io
 	_, imageCopyError := io.Copy(createImage, content)
 
 	if imageCopyError != nil {
-		return "", fmt.Errorf("error in copying imaeg to directory %w", imageCopyError)
+		return nil, fmt.Errorf("error in copying imaeg to directory %w", imageCopyError)
 	}
 
-	return imagePath, nil
+	return &ImageInfo, nil
+}
+
+func (gs *GalleryService) InsertImage(images []GalleryImages) error {
+	var insertQuery string = `INSERT INTO gallery_images (gallery_id, real_name, generate_name, file_size, created_at) VALUES`
+
+	values := []interface{}{}
+
+	// Dynamically build placeholders and values
+	placeholder := 1
+	for i, img := range images {
+		if i > 0 {
+			insertQuery += ", "
+		}
+		insertQuery += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", placeholder, placeholder+1, placeholder+2, placeholder+3, placeholder+4)
+		values = append(values, img.GalleryId, img.RealName, img.GenerateName, img.FileSize, img.CreatedAt)
+		placeholder += 5
+	}
+
+	_, queryError := gs.DB.Exec(insertQuery, values...)
+
+	if queryError != nil {
+		return queryError
+	}
+
+	return nil
 }

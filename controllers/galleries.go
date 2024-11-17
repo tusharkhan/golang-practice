@@ -59,24 +59,35 @@ func (g Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileHeaders := r.MultipartForm.File["gaslleryImages"]
-	var uploadedImageName []string
+	var uploadedImageName []models.GalleryImages
 	for _, fileHeader := range fileHeaders {
 		file, err := fileHeader.Open()
+		fmt.Println(file)
 		if err != nil {
 			g.Template.New.Execute(w, r, nil, models.InternalServerError)
 		}
 		defer file.Close()
 
-		uploadedImage, imageUploadError := g.GalleryService.UploadImage(createdGallery.ID, fileHeader.Filename, file)
+		uploadedImage, imageUploadError := g.GalleryService.UploadImage(createdGallery.ID, fileHeader, file)
 
 		if imageUploadError != nil {
 			g.Template.New.Execute(w, r, nil, imageUploadError)
 		}
-
-		uploadedImageName = append(uploadedImageName, uploadedImage)
+		var img models.GalleryImages = models.GalleryImages{
+			GalleryId:    uploadedImage.GalleryId,
+			FileSize:     uploadedImage.FileSize,
+			RealName:     uploadedImage.RealName,
+			GenerateName: uploadedImage.GenerateName,
+			CreatedAt:    uploadedImage.CreatedAt,
+		}
+		uploadedImageName = append(uploadedImageName, img)
 	}
 
-	fmt.Println(uploadedImageName)
+	inserrtError := g.GalleryService.InsertImage(uploadedImageName)
+
+	if inserrtError != nil {
+		g.Template.New.Execute(w, r, nil, inserrtError)
+	}
 
 	http.Redirect(w, r, "/gallery", http.StatusFound)
 }
