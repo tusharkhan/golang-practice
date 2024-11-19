@@ -158,6 +158,12 @@ func (gs *GalleryService) Delete(id int) error {
 		return fmt.Errorf("error in deleting gallery %w", deleteError)
 	}
 
+	var galleryImagesDeleteQuery string = "DELETE FROM gallery_images WHERE gallery_id = $1"
+	_, galleryImagesDeleteError := gs.DB.Exec(galleryImagesDeleteQuery, id)
+	if galleryImagesDeleteError != nil {
+		return fmt.Errorf("error in deleting gallery images %w", galleryImagesDeleteError)
+	}
+
 	return nil
 }
 
