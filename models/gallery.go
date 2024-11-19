@@ -2,7 +2,6 @@ package models
 
 import (
 	"course/helper"
-	"github.com/google/uuid"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -11,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Gallery struct {
@@ -180,7 +181,7 @@ func (gs *GalleryService) Images(galleryId int) ([]Image, error) {
 	var imagePaths []Image
 
 	for _, fil := range allFiles {
-		if helper.HasExtension(fil, []string{".png", ".jpg", ".jpeg", "gif"}) {
+		if helper.HasExtension(fil, []string{".png", ".jpg", ".jpeg", "gif", ".pdf"}) {
 			imagePaths = append(imagePaths, Image{
 				Path:      fil,
 				GalleryId: galleryId,
@@ -247,6 +248,24 @@ func (gs *GalleryService) InsertImage(images []GalleryImages) error {
 
 	if queryError != nil {
 		return queryError
+	}
+
+	return nil
+}
+
+func (gs *GalleryService) RemoveImage(galleryId int, imageName string) error {
+	var queryString string = "DELETE FROM gallery_images WHERE gallery_id = $1 AND generate_name = $2"
+
+	_, executeError := gs.DB.Exec(queryString, galleryId, imageName)
+
+	if executeError != nil {
+		return fmt.Errorf("error in deleting image %w", executeError)
+	}
+
+	var imagePath string = filepath.Join(gs.GalleryDire(galleryId), imageName)
+
+	if !helper.DeleteFile(imagePath) {
+		return fmt.Errorf("error in deleting file")
 	}
 
 	return nil

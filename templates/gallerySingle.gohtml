@@ -2,11 +2,13 @@
 
 <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-7">
     {{ range .Images }}
-    <div>
-        <a href="/gallery/{{.GalleryId}}/images/{{.FileName}}">
-            <img class="h-auto max-w-full rounded-lg" src="/gallery/{{.GalleryId}}/images/{{.FileName}}"
+    <div class="relative">
+        <a href="/gallery/{{.GalleryId}}/images/{{.FileName}}/delete"
+            class=" absolute top-3 right-3 text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">Delete</a>
+
+        <img class="h-auto max-w-full rounded-lg" src="/gallery/{{.GalleryId}}/images/{{.FileName}}"
             alt="{{.FileName}}">
-        </a>
+
     </div>
     {{end}}
 </div>

@@ -196,3 +196,22 @@ func (g Galleries) RenderImage(w http.ResponseWriter, r *http.Request) {
 
 	http.ServeFile(w, r, realPath)
 }
+
+func (g Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	galleryId := chi.URLParam(r, "galleryid")
+	id, urlParamError := strconv.Atoi(galleryId)
+
+	if urlParamError != nil {
+		http.Error(w, "Invalide url param", http.StatusInternalServerError)
+	}
+
+	var filename string = chi.URLParam(r, "filename")
+
+	var imageDeleteError error = g.GalleryService.RemoveImage(id, filename)
+
+	if imageDeleteError != nil {
+		http.Error(w, imageDeleteError.Error(), http.StatusInternalServerError)
+	}
+
+	http.Redirect(w, r, r.Header.Get("Referer"), http.StatusFound)
+}

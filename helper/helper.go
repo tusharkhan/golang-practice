@@ -56,6 +56,10 @@ func ReadFile(filepath string) (string, error) {
 	return string(data), nil
 }
 
+func DeleteFile(path string) bool {
+	return os.Remove(path) == nil
+}
+
 func RootDir() string {
 	_, b, _, _ := runtime.Caller(0)
 	d := path.Join(path.Dir(b))
@@ -124,7 +128,7 @@ func FormateDateTime(realDate, formta string) (string, error) {
 func HasExtension(file string, extensions []string) bool {
 	for _, ext := range extensions {
 		file = strings.ToLower(file)
-		ext  = strings.ToLower(ext)
+		ext = strings.ToLower(ext)
 
 		if filepath.Ext(file) == ext {
 			return true
