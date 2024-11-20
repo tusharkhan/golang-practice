@@ -129,6 +129,10 @@ func main() {
 		})
 	})
 
+	assetHandler := http.FileServer(http.Dir("assets"))
+
+	router.Get("/assets/*", http.StripPrefix("/assets", assetHandler).ServeHTTP)
+
 	router.NotFound(notFoundHandler)
 	http.ListenAndServe(":8080", router)
 }

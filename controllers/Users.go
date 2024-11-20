@@ -137,7 +137,7 @@ func (u Users) SignOut(writer http.ResponseWriter, request *http.Request) {
 			MaxAge:   -1,
 			HttpOnly: true,
 		})
-		http.Redirect(writer, request, "/", http.StatusFound)
+		http.Redirect(writer, request, "/signin", http.StatusFound)
 	}
 }
 
