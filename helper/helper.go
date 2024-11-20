@@ -56,8 +56,12 @@ func ReadFile(filepath string) (string, error) {
 	return string(data), nil
 }
 
-func DeleteFile(path string) bool {
-	return os.Remove(path) == nil
+func DeleteFile(path string) error {
+	return os.Remove(path)
+}
+
+func DeleteDirectory(path string) error {
+	return os.RemoveAll(path)
 }
 
 func RootDir() string {

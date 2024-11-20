@@ -150,6 +150,12 @@ func (gs *GalleryService) Update(gall *Gallery) error {
 }
 
 func (gs *GalleryService) Delete(id int) error {
+	var galleryImagesDeleteQuery string = "DELETE FROM gallery_images WHERE gallery_id = $1"
+	_, galleryImagesDeleteError := gs.DB.Exec(galleryImagesDeleteQuery, id)
+	if galleryImagesDeleteError != nil {
+		return fmt.Errorf("error in deleting gallery images %w", galleryImagesDeleteError)
+	}
+
 	var galleryDeleteQuery string = "DELETE FROM galleries WHERE id=$1"
 
 	_, deleteError := gs.DB.Exec(galleryDeleteQuery, id)
@@ -158,10 +164,9 @@ func (gs *GalleryService) Delete(id int) error {
 		return fmt.Errorf("error in deleting gallery %w", deleteError)
 	}
 
-	var galleryImagesDeleteQuery string = "DELETE FROM gallery_images WHERE gallery_id = $1"
-	_, galleryImagesDeleteError := gs.DB.Exec(galleryImagesDeleteQuery, id)
-	if galleryImagesDeleteError != nil {
-		return fmt.Errorf("error in deleting gallery images %w", galleryImagesDeleteError)
+	var deletingError error = helper.DeleteDirectory(gs.GalleryDire(id))
+	if deletingError != nil {
+		return fmt.Errorf("error in deleting file %w", deletingError)
 	}
 
 	return nil
@@ -269,9 +274,9 @@ func (gs *GalleryService) RemoveImage(galleryId int, imageName string) error {
 	}
 
 	var imagePath string = filepath.Join(gs.GalleryDire(galleryId), imageName)
-
-	if !helper.DeleteFile(imagePath) {
-		return fmt.Errorf("error in deleting file")
+	var deletingError error = helper.DeleteFile(imagePath)
+	if deletingError != nil {
+		return fmt.Errorf("error in deleting file %w", deletingError)
 	}
 
 	return nil
